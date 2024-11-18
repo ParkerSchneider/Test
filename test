@@ -1,0 +1,55 @@
+Import-Module activedirectory
+
+do{
+
+    # Define the domain components as variables for easy modification
+    $domain = "Change_to_your_last_name"   # First part of the domain
+    $domainsuffix = "local"       # Second part of the domain
+
+    # Define the Organizational Unit (OU) path
+    $ou = "OU=autousers"
+
+    # Construct the full path dynamically
+    $path = "$ou,DC=$domain,DC=$domainsuffix"
+
+    # Define the fixed domain name for UPN
+    $domainName = "@$domain.$domainsuffix"
+
+    # Static password
+    $password = ConvertTo-SecureString "SecurePassword2024!" -AsPlainText -Force
+
+    # Gather user input
+    $firstName = Read-Host "Enter First Name"
+    $lastName = Read-Host "Enter Last Name"
+
+
+    # Automatically construct SamAccountName and Name
+    $samAccountName = "$firstName.$($lastName.Substring(0, 1))".ToLower()
+    $name = "$firstName $lastName"
+
+    # Automatically construct UserPrincipalName
+    $userPrincipalName = "$samAccountName$domainName"
+
+    # Create the new AD user
+    New-ADUser -Name $name `
+        -GivenName $firstName `
+        -Surname $lastName `
+        -SamAccountName $samAccountName `
+        -UserPrincipalName $userPrincipalName `
+        -Path $path `
+        -AccountPassword $password `
+        -ChangePasswordAtLogon $true `
+        -Enabled $true
+
+
+    # Print out the new user's login information
+    Write-Host "User created successfully!" -ForegroundColor Green
+    Write-Host "---------------------------"
+    Write-Host "Name: $name"
+    Write-Host "SamAccountName: $samAccountName"
+    Write-Host "UserPrincipalName (Login): $userPrincipalName"
+    Write-Host "Temporary Password: SecurePassword2024!"
+    Write-Host "---------------------------"
+
+    # Prompt to close or create another user
+    $response = Read-Host "Press Enter to close or type Y to create another user"
